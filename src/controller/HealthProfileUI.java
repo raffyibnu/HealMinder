@@ -3,12 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Controller;
+package controller;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
-
 /**
  *
  * @author Raffy
@@ -23,6 +27,7 @@ public class HealthProfileUI extends javax.swing.JFrame {
      */
     public HealthProfileUI() {
         initComponents();
+        getDataFromRiwayatKesehatan();
     }
 
     /**
@@ -242,6 +247,7 @@ public class HealthProfileUI extends javax.swing.JFrame {
 
     private void backMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_backMouseClicked
         Dashboard dashboard = new Dashboard();
+        dashboard.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         dashboard.setVisible(true);
         // Close the current Login frame
@@ -250,6 +256,7 @@ public class HealthProfileUI extends javax.swing.JFrame {
 
     private void addMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_addMouseClicked
         ScheduleUI schedule = new ScheduleUI();
+        schedule.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         schedule.setVisible(true);
         // Close the current Login frame
@@ -258,6 +265,7 @@ public class HealthProfileUI extends javax.swing.JFrame {
 
     private void pillMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pillMouseClicked
         MedicineUI medicine = new MedicineUI();
+        medicine.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         medicine.setVisible(true);
         // Close the current Login frame
@@ -266,8 +274,9 @@ public class HealthProfileUI extends javax.swing.JFrame {
 
     private void profileMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_profileMouseClicked
         HealthProfileUI healthProfile = new HealthProfileUI();
-    // Set data kesehatan sebelum menampilkan frame HealthProfileUI
-        healthProfile.setHealthProfile(alergiList, penyakitList, kontakList, goldarList);
+        healthProfile.setLocationRelativeTo(null);
+        // Set data kesehatan sebelum menampilkan frame HealthProfileUI
+        healthProfile.getDataFromRiwayatKesehatan(); // Call the method that retrieves data
         // Make the Medicine frame visible
         healthProfile.setVisible(true);
         // Close the current frame
@@ -276,12 +285,14 @@ public class HealthProfileUI extends javax.swing.JFrame {
 
     private void editMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_editMouseClicked
         EditHP editHP = new EditHP();
+        editHP.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         editHP.setVisible(true);
         // Close the current Login frame
         this.dispose();
     }//GEN-LAST:event_editMouseClicked
-    public void setHealthProfile(List<String> alergiList, List<String> penyakitList, List<String> kontakList, List<String> goldarList) {
+    private void updateJListData() {
+        // Buat model baru untuk masing-masing JList
         DefaultListModel<String> alergiModel = new DefaultListModel<>();
         DefaultListModel<String> penyakitModel = new DefaultListModel<>();
         DefaultListModel<String> kontakModel = new DefaultListModel<>();
@@ -299,9 +310,44 @@ public class HealthProfileUI extends javax.swing.JFrame {
         kontak.setModel(kontakModel);
         goldar.setModel(goldarModel);
     }
-    /**
-     * @param args the command line arguments
-     */
+    private void getDataFromRiwayatKesehatan() {
+        try {
+            // Buat koneksi ke database
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/healminder", "healminder", "pbo");
+
+            // Ambil data dari tabel riwayat_kesehatan
+            String query = "SELECT alergi, penyakit, golongan_darah, kontak_darurat FROM riwayat_kesehatan";
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            // Ambil data dan tambahkan ke list masing-masing
+            if (resultSet.next()) {
+                String alergiData = resultSet.getString("alergi");
+                String penyakitData = resultSet.getString("penyakit");
+                String golonganDarahData = resultSet.getString("golongan_darah");
+                String kontakDaruratData = resultSet.getString("kontak_darurat");
+
+                // Tambahkan data ke list masing-masing
+                alergiList.add(alergiData);
+                penyakitList.add(penyakitData);
+                goldarList.add(golonganDarahData);
+                kontakList.add(kontakDaruratData);
+
+                // Tampilkan data pada JList
+                updateJListData();
+            }
+
+            // Tutup resource
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exception, misalnya dengan menampilkan pesan error
+            System.err.println("Error fetching data from riwayat_kesehatan: " + e.getMessage());
+        }
+    }
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -330,7 +376,10 @@ public class HealthProfileUI extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new HealthProfileUI().setVisible(true);
+                HealthProfileUI healthProfileFrame = new HealthProfileUI();
+                healthProfileFrame.pack();
+                healthProfileFrame.setLocationRelativeTo(null);
+                healthProfileFrame.setVisible(true);
             }
         });
     }

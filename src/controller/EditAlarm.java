@@ -3,12 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Controller;
-
+package controller;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.awt.Frame;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.ResultSet;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 
@@ -21,12 +25,18 @@ public class EditAlarm extends javax.swing.JFrame {
     private Timer alarmTimer;
     private boolean notificationShown = false;
     private DefaultListModel<String> listModel = new DefaultListModel<>();
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/healminder";
+    private static final String DB_USER = "healminder";
+    private static final String DB_PASS = "pbo";
     /**
      * Creates new form EditAlarm
      */
     public EditAlarm() {
         initComponents();
-        daftarAlarm.setModel(listModel);
+        loadObatComboBoxData();
+    }
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
     }
 
     /**
@@ -47,14 +57,10 @@ public class EditAlarm extends javax.swing.JFrame {
         pill = new javax.swing.JLabel();
         profile = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        setObat = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         setAlarm = new javax.swing.JTextField();
         submit = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        daftarAlarm = new javax.swing.JList<>();
-        delete = new javax.swing.JButton();
+        jComboBox1 = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -146,12 +152,6 @@ public class EditAlarm extends javax.swing.JFrame {
         jLabel2.setForeground(new java.awt.Color(0, 102, 153));
         jLabel2.setText("Set Alarm");
 
-        setObat.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                setObatActionPerformed(evt);
-            }
-        });
-
         jLabel3.setBackground(new java.awt.Color(0, 102, 153));
         jLabel3.setFont(new java.awt.Font("Arial", 1, 16)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(0, 102, 153));
@@ -170,23 +170,6 @@ public class EditAlarm extends javax.swing.JFrame {
             }
         });
 
-        jLabel4.setBackground(new java.awt.Color(0, 102, 153));
-        jLabel4.setFont(new java.awt.Font("Arial", 1, 16)); // NOI18N
-        jLabel4.setForeground(new java.awt.Color(0, 102, 153));
-        jLabel4.setText("Daftar Alarm");
-
-        jScrollPane1.setViewportView(daftarAlarm);
-
-        delete.setBackground(new java.awt.Color(0, 102, 153));
-        delete.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        delete.setForeground(new java.awt.Color(153, 255, 255));
-        delete.setText("Delete");
-        delete.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -196,22 +179,14 @@ public class EditAlarm extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(37, 37, 37)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel4)
                     .addComponent(jLabel3)
                     .addComponent(setAlarm, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
                     .addComponent(jLabel2)
-                    .addComponent(setObat)
-                    .addComponent(submit, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(9, 9, 9)
+                        .addComponent(submit, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(delete)
-                .addGap(23, 23, 23))
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addGap(33, 33, 33)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(124, Short.MAX_VALUE)))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -220,24 +195,15 @@ public class EditAlarm extends javax.swing.JFrame {
                 .addGap(59, 59, 59)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(setObat, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(setAlarm, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(15, 15, 15)
-                .addComponent(jLabel4)
-                .addGap(16, 16, 16)
-                .addComponent(delete)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 226, Short.MAX_VALUE)
+                .addGap(48, 48, 48)
                 .addComponent(submit)
-                .addGap(54, 54, 54)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 307, Short.MAX_VALUE)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addGap(378, 378, 378)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(213, Short.MAX_VALUE)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -256,6 +222,7 @@ public class EditAlarm extends javax.swing.JFrame {
 
     private void backMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_backMouseClicked
         Alarm alarm = new Alarm();
+        alarm.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         alarm.setVisible(true);
         // Close the current Login frame
@@ -264,6 +231,7 @@ public class EditAlarm extends javax.swing.JFrame {
 
     private void addMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_addMouseClicked
         ScheduleUI schedule = new ScheduleUI();
+        schedule.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         schedule.setVisible(true);
         // Close the current Login frame
@@ -272,6 +240,7 @@ public class EditAlarm extends javax.swing.JFrame {
 
     private void pillMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pillMouseClicked
         MedicineUI medicine = new MedicineUI();
+        medicine.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         medicine.setVisible(true);
         // Close the current Login frame
@@ -280,75 +249,78 @@ public class EditAlarm extends javax.swing.JFrame {
 
     private void profileMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_profileMouseClicked
         HealthProfileUI healthProfile = new HealthProfileUI();
+        healthProfile.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         healthProfile.setVisible(true);
         // Close the current Login frame
         this.dispose();
     }//GEN-LAST:event_profileMouseClicked
 
-    private void setObatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setObatActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_setObatActionPerformed
-
     private void setAlarmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setAlarmActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_setAlarmActionPerformed
 
     private void submitMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_submitMouseClicked
-        String obat = setObat.getText().trim();
+        String obat = jComboBox1.getSelectedItem().toString(); // Get value from JComboBox
         String alarm = setAlarm.getText().trim();
 
         if (obat.isEmpty() || alarm.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Harap lengkapi semua informasi terlebih dahulu.", "Error", JOptionPane.ERROR_MESSAGE);
-            return; // Hentikan proses submit jika ada field yang kosong
-        }
-
-        // Validasi format waktu (hh:mm:ss)
-        if (!isValidTimeFormat(alarm)) {
-            JOptionPane.showMessageDialog(this, "Format waktu tidak valid. Gunakan format hh:mm:ss.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please complete all information first.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Tambahkan waktu alarm ke daftarAlarm
-        DefaultListModel<String> modelAlarm = (DefaultListModel<String>) daftarAlarm.getModel();
-        String listItem = obat + " - " + alarm; // Gabungkan obat dan waktu alarm
-
-        // Check if the item is already in the list
-        if (!modelAlarm.contains(listItem)) {
-            modelAlarm.addElement(listItem);
-        } else {
-            JOptionPane.showMessageDialog(this, "Alarm dengan obat yang sama sudah ada.", "Error", JOptionPane.ERROR_MESSAGE);
-            return; // Hentikan proses submit jika alarm sudah ada
+        // Validate time format (hh:mm:ss)
+        if (!isValidTimeFormat(alarm)) {
+            JOptionPane.showMessageDialog(this, "Invalid time format. Use hh:mm:ss format.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
-        // Set timer untuk menampilkan notifikasi
+        // Set a timer to display the notification
         setNotificationTimer(alarm, obat);
 
-        // Dapatkan objek Alarm yang sudah ada
+        // Insert the alarm information into the database
+        insertAlarmToDatabase(obat, alarm);
+
+        // Get the existing Alarm frame
         Alarm alarmFrame = getAlarmFrame();
 
-        // Tambahkan data ke daftarObat di kelas Alarm
-        if (alarmFrame != null) {
-            tambahObat(obat);
-        }
-
-        JOptionPane.showMessageDialog(this, "Informasi berhasil disimpan.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Information saved successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_submitMouseClicked
+    private void loadObatComboBoxData() {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
 
-    private void deleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteActionPerformed
-        int selectedIndex = daftarAlarm.getSelectedIndex();
-    
-        if (selectedIndex != -1) {
-            // Hapus item terpilih dari daftarAlarm
-            DefaultListModel<String> modelAlarm = (DefaultListModel<String>) daftarAlarm.getModel();
-            modelAlarm.remove(selectedIndex);
+        try {
+            // Step 1: Establish Database Connection
+            connection = getConnection();
 
-            // Reset timer dan status notifikasi
-            resetNotification();
-        } else {
-            JOptionPane.showMessageDialog(this, "Pilih alarm yang ingin dihapus.", "Error", JOptionPane.ERROR_MESSAGE);
+            // Step 2: Create SQL Query
+            String sql = "SELECT nama_obat FROM obat";
+            preparedStatement = connection.prepareStatement(sql);
+
+            // Step 3: Execute Query and Get Results
+            resultSet = preparedStatement.executeQuery();
+
+            // Step 4: Populate JComboBox with Data from ResultSet
+            while (resultSet.next()) {
+                String namaObat = resultSet.getString("nama_obat");
+                jComboBox1.addItem(namaObat);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception (log it or show an error message)
+        } finally {
+            // Step 5: Close Resources
+            try {
+                if (resultSet != null) resultSet.close();
+                if (preparedStatement != null) preparedStatement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-    }//GEN-LAST:event_deleteActionPerformed
+    }
     private void resetNotification() {
         if (alarmTimer != null) {
             alarmTimer.stop();
@@ -369,6 +341,37 @@ public class EditAlarm extends javax.swing.JFrame {
 
         return null;
     }
+    
+    private void insertAlarmToDatabase(String obat, String alarm) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            // Step 1: Establish Database Connection
+            connection = getConnection();
+
+            // Step 2: Create SQL Query
+            String sql = "INSERT INTO alarm (nama_obat, waktu) VALUES (?, ?)";
+            preparedStatement = connection.prepareStatement(sql);
+
+            // Step 3: Set Parameters and Execute Query
+            preparedStatement.setString(1, obat);
+            preparedStatement.setString(2, alarm);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception (log it or show an error message)
+        } finally {
+            // Step 4: Close Resources
+            try {
+                if (preparedStatement != null) preparedStatement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     
     private boolean isValidTimeFormat(String time) {
         String regex = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$";
@@ -424,18 +427,6 @@ public class EditAlarm extends javax.swing.JFrame {
         }
     }
     
-    public void tambahObat(String obat) {
-        // Ensure the listModel is not null
-        if (listModel != null) {
-            // Check if the medicine is not already in the list
-            if (!listModel.contains(obat)) {
-                // Add the medicine to the listModel
-                listModel.addElement(obat);
-            }
-        }
-    }
-
-    
     /**
      * @param args the command line arguments
      */
@@ -477,20 +468,16 @@ public class EditAlarm extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel add;
     private javax.swing.JLabel back;
-    private javax.swing.JList<String> daftarAlarm;
-    private javax.swing.JButton delete;
+    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel pill;
     private javax.swing.JLabel profile;
     private javax.swing.JTextField setAlarm;
-    private javax.swing.JTextField setObat;
     private javax.swing.JLabel submit;
     // End of variables declaration//GEN-END:variables
 }

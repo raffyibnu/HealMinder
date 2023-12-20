@@ -3,19 +3,32 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Controller;
+package controller;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
 
-/**
- *
- * @author Raffy
- */
 public class ScheduleUI extends javax.swing.JFrame {
-
-    /**
-     * Creates new form Schedule
-     */
+    private DefaultListModel<String> listModel;
     public ScheduleUI() {
         initComponents();
+        delete.setText("Delete");
+
+        // Initialize DefaultListModel
+        listModel = new DefaultListModel<>();
+
+        // Set the model for JList
+        listJadwal.setModel(listModel);
+
+        // Call showJadwal() to display schedule during initialization
+        showJadwal();
     }
 
     /**
@@ -30,11 +43,13 @@ public class ScheduleUI extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         back = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         add = new javax.swing.JLabel();
         pill = new javax.swing.JLabel();
         profile = new javax.swing.JLabel();
+        delete = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        listJadwal = new javax.swing.JList<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -49,8 +64,6 @@ public class ScheduleUI extends javax.swing.JFrame {
                 backMouseClicked(evt);
             }
         });
-
-        jLabel13.setIcon(new javax.swing.ImageIcon(getClass().getResource("/image/ph_list-fill.png"))); // NOI18N
 
         jPanel3.setBackground(new java.awt.Color(0, 102, 153));
 
@@ -99,19 +112,34 @@ public class ScheduleUI extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        delete.setText("Delete");
+        delete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteActionPerformed(evt);
+            }
+        });
+
+        jScrollPane2.setViewportView(listJadwal);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(37, 37, 37)
-                .addComponent(back)
-                .addGap(68, 68, 68)
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 72, Short.MAX_VALUE)
-                .addComponent(jLabel13)
-                .addGap(36, 36, 36))
             .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(141, 141, 141)
+                .addComponent(delete)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addGap(37, 37, 37)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(back)
+                        .addGap(68, 68, 68)
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addGap(36, 36, 36))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -119,9 +147,12 @@ public class ScheduleUI extends javax.swing.JFrame {
                 .addGap(44, 44, 44)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(back)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel13))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 640, Short.MAX_VALUE)
+                    .addComponent(jLabel1))
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(60, 60, 60)
+                .addComponent(delete)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 317, Short.MAX_VALUE)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
@@ -141,6 +172,7 @@ public class ScheduleUI extends javax.swing.JFrame {
 
     private void backMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_backMouseClicked
         Dashboard dashboard = new Dashboard();
+        dashboard.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         dashboard.setVisible(true);
         // Close the current Login frame
@@ -148,15 +180,16 @@ public class ScheduleUI extends javax.swing.JFrame {
     }//GEN-LAST:event_backMouseClicked
 
     private void addMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_addMouseClicked
+        moveDataFromAlarmToJadwal();
         ScheduleUI schedule = new ScheduleUI();
-        // Make the Medicine frame visible
+        schedule.setLocationRelativeTo(null);
         schedule.setVisible(true);
-        // Close the current Login frame
         this.dispose();
     }//GEN-LAST:event_addMouseClicked
 
     private void pillMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pillMouseClicked
         MedicineUI medicine = new MedicineUI();
+        medicine.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         medicine.setVisible(true);
         // Close the current Login frame
@@ -165,11 +198,138 @@ public class ScheduleUI extends javax.swing.JFrame {
 
     private void profileMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_profileMouseClicked
         HealthProfileUI healthProfile = new HealthProfileUI();
+        healthProfile.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         healthProfile.setVisible(true);
         // Close the current Login frame
         this.dispose();
     }//GEN-LAST:event_profileMouseClicked
+
+    private void deleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteActionPerformed
+        int selectedIndex = listJadwal.getSelectedIndex();
+
+        // Check if an item is selected
+        if (selectedIndex != -1) {
+            // Remove the selected item from the listModel
+            listModel.remove(selectedIndex);
+
+            deleteDataFromDatabase(selectedIndex);
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select an item to delete.", "Warning", JOptionPane.WARNING_MESSAGE);
+        }
+    }//GEN-LAST:event_deleteActionPerformed
+    private List<String> getDataFromAlarm() {
+        List<String> dataList = new ArrayList<>();
+        try {
+            // Establish a connection to the database
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/healminder", "healminder", "pbo");
+
+            // SQL statement to retrieve data from the "alarm" table
+            String query = "SELECT nama_obat, dosis, waktu FROM alarm";
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+            // Loop through the result set and add data to the list
+            while (resultSet.next()) {
+                String namaObat = resultSet.getString("nama_obat");
+                String waktu = resultSet.getString("waktu");
+
+                // Combine the data into a single string and add it to the list
+                String dataString = namaObat + " - Waktu: " + waktu;
+                dataList.add(dataString);
+            }
+
+            // Close resources
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error fetching data from alarm: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        // Print data for debugging
+        System.out.println("Data from alarm: " + dataList);
+        return dataList;
+    }
+
+    
+    private void deleteDataFromDatabase(int selectedIndex) {
+        try {
+            // Establish a connection to the database
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/healminder", "healminder", "pbo");
+
+            // Get the selected data from the listModel
+            String selectedData = listModel.getElementAt(selectedIndex);
+
+            // Split the data to extract relevant information (modify this based on your data structure)
+            String[] dataParts = selectedData.split(" - ");
+            String namaObat = dataParts[0];
+            String waktu = dataParts[1];
+
+            // SQL statement to delete data from the "alarm" table
+            String deleteQuery = "DELETE FROM alarm WHERE nama_obat = ? AND waktu = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery);
+            preparedStatement.setString(1, namaObat);
+            preparedStatement.setString(2, waktu);
+
+            // Execute the delete query
+ 
+            preparedStatement.executeUpdate();
+            connection.commit();
+
+
+            // Close resources
+            preparedStatement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error deleting data from the database: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+   private void showJadwal() {
+        try {
+            // Establish a connection to the database
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/healminder", "healminder", "pbo");
+            connection.setAutoCommit(true);
+            // SQL statement to retrieve data from the "alarm" table
+            String query = "SELECT nama_obat, waktu FROM alarm";
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+            // Clear the model before adding new data
+            listModel.clear();
+
+            // Loop through the result set and add data to the model
+            while (resultSet.next()) {
+                String namaObat = resultSet.getString("nama_obat");
+                String waktu = resultSet.getString("waktu");
+
+                String dataString = namaObat + " -" + waktu;
+
+                // Add data to the model
+                listModel.addElement(dataString);
+            }
+
+            // Close resources
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error fetching data from alarm: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+
+    
+   private void moveDataFromAlarmToJadwal() {
+        showJadwal();
+    }
 
     /**
      * @param args the command line arguments
@@ -202,7 +362,11 @@ public class ScheduleUI extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new ScheduleUI().setVisible(true);
+                ScheduleUI scheduleFrame = new ScheduleUI();
+                scheduleFrame.pack();
+                scheduleFrame.setLocationRelativeTo(null);
+                scheduleFrame.setVisible(true);
+
             }
         });
     }
@@ -210,10 +374,12 @@ public class ScheduleUI extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel add;
     private javax.swing.JLabel back;
+    private javax.swing.JButton delete;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel13;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JList<String> listJadwal;
     private javax.swing.JLabel pill;
     private javax.swing.JLabel profile;
     // End of variables declaration//GEN-END:variables

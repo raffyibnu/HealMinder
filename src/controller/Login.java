@@ -3,22 +3,24 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Controller;
-
-import javax.swing.DefaultListModel;
+package controller;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.swing.JOptionPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 
 /**
  *
  * @author Raffy
  */
 public class Login extends javax.swing.JFrame {
-    /**
-     * Creates new form Login
-     */
+    static final String DB_URL = "jdbc:mysql://localhost:3306/healminder";
+    static final String DB_USER = "healminder";
+    static final String DB_PASS = "pbo";
     public Login() {
         initComponents();
         initEnterKeyListeners();
@@ -49,13 +51,14 @@ public class Login extends javax.swing.JFrame {
 
         // Check if both username and password fields are filled
         if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Username and password must be filled.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Username dan password harus diisi.", "Error", JOptionPane.ERROR_MESSAGE);
         } else {
             // Replace the following comment with your actual login logic
             // For now, let's assume a simple check for demonstration purposes
             if (isValidLogin(username, password)) {
                 // Login successful, open the Dashboard
                 Dashboard dashboard = new Dashboard();
+                dashboard.setLocationRelativeTo(null);
                 dashboard.setVisible(true);
 
                 // Close the current Login frame
@@ -182,7 +185,7 @@ public class Login extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 800, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
         );
 
         pack();
@@ -193,30 +196,32 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_jPanel2ComponentMoved
 
     private void masukMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_masukMouseClicked
-        String username = Username.getText().trim();
-        String password = Password.getText().trim();
+        String enteredUsername = Username.getText().trim();
+        String enteredPassword = new String(Password.getPassword()).trim();
 
-        if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Username dan password harus diisi", "Error", JOptionPane.ERROR_MESSAGE);
+        if (enteredUsername.isEmpty() || enteredPassword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Username and password must be filled.", "Error", JOptionPane.ERROR_MESSAGE);
         } else {
             // Replace the following comment with your actual login logic
             // For now, let's assume a simple check for demonstration purposes
-            if (isValidLogin(username, password)) {
+            if (isValidLogin(enteredUsername, enteredPassword)) {
                 // Login successful, open the Dashboard
-                Dashboard dashboard = new Dashboard();
+                Dashboard dashboard = new Dashboard(enteredUsername);
+                dashboard.setLocationRelativeTo(null);
                 dashboard.setVisible(true);
 
                 // Close the current Login frame
                 this.dispose();
             } else {
                 // Invalid credentials, show an error message
-                JOptionPane.showMessageDialog(this, "Username atau password salah", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Invalid username or password.", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        }
+    }
     }//GEN-LAST:event_masukMouseClicked
 
     private void daftarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_daftarMouseClicked
         Daftar daftar = new Daftar();
+        daftar.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         daftar.setVisible(true);
         // Close the current Login frame
@@ -225,8 +230,43 @@ public class Login extends javax.swing.JFrame {
     private boolean isValidLogin(String username, String password) {
     // Perform your actual login logic here
     // For now, let's assume a simple check where username is "admin" and password is "password"
-        return username.equals("budi") && password.equals("pekerti");
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            // Membuat koneksi ke database
+            connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+            // Menjalankan query untuk memeriksa keberadaan username dan password
+            String query = "SELECT * FROM user WHERE username = ? AND password = ?";
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, password);
+            resultSet = preparedStatement.executeQuery();
+
+            // Jika ada hasil dari query, maka login berhasil
+            return resultSet.next();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle error
+            JOptionPane.showMessageDialog(this, "Error while connecting to the database.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+
+        } finally {
+            // Menutup semua sumber daya yang digunakan
+            try {
+                if (resultSet != null) resultSet.close();
+                if (preparedStatement != null) preparedStatement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
+    
+
     /**
      * @param args the command line arguments
      */
@@ -250,7 +290,10 @@ public class Login extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
-            new Login().setVisible(true);
+            Login loginFrame = new Login();
+            loginFrame.pack();
+            loginFrame.setLocationRelativeTo(null);
+            loginFrame.setVisible(true);
         });
     }
     

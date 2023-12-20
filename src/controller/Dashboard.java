@@ -3,20 +3,29 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Controller;
+package controller;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.DefaultListModel;
 /**
  *
  * @author Raffy
  */
 public class Dashboard extends javax.swing.JFrame {
     private Timer timer;
-    private String username = "budi";
+    private String username; // Add this line to declare the username variable
+    static final String DB_URL = "jdbc:mysql://localhost:3306/healminder";
+    static final String DB_USER = "healminder";
+    static final String DB_PASS = "pbo";
     public void showDashboard() {
         this.setVisible(true);
     }
@@ -24,6 +33,7 @@ public class Dashboard extends javax.swing.JFrame {
         initComponents();
         initClock();
         updateGreeting();
+        populateScheduleList();
     }
 
     /**
@@ -49,10 +59,8 @@ public class Dashboard extends javax.swing.JFrame {
         pill = new javax.swing.JLabel();
         profile = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jList2 = new javax.swing.JList<>();
+        listJadwal = new javax.swing.JList<>();
         jLabel8 = new javax.swing.JLabel();
         lihatSemua = new javax.swing.JLabel();
 
@@ -78,7 +86,7 @@ public class Dashboard extends javax.swing.JFrame {
         jLabel4.setBackground(new java.awt.Color(51, 51, 51));
         jLabel4.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(102, 255, 255));
-        jLabel4.setText("Halo budi, ada yang bisa kami bantu ?");
+        jLabel4.setText("Halo ");
 
         alarm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/image/basil_alarm-solid.png"))); // NOI18N
         alarm.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -111,17 +119,17 @@ public class Dashboard extends javax.swing.JFrame {
                 .addContainerGap(311, Short.MAX_VALUE))
             .addGroup(clockPanelLayout.createSequentialGroup()
                 .addGap(22, 22, 22)
-                .addGroup(clockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(clockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(clockPanelLayout.createSequentialGroup()
                         .addComponent(search, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(searchButton))
-                    .addGroup(clockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(clockPanelLayout.createSequentialGroup()
+                    .addGroup(clockPanelLayout.createSequentialGroup()
+                        .addGroup(clockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(logout)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(alarm))
-                        .addComponent(jLabel4)))
+                            .addComponent(jLabel4))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(alarm)))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         clockPanelLayout.setVerticalGroup(
@@ -129,13 +137,13 @@ public class Dashboard extends javax.swing.JFrame {
             .addGroup(clockPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(clockLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
-                .addGroup(clockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(alarm)
-                    .addComponent(logout))
-                .addGap(27, 27, 27)
-                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
+                .addGroup(clockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(logout)
+                    .addComponent(alarm))
+                .addGap(18, 18, 18)
+                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addGroup(clockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(search, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(searchButton))
@@ -193,9 +201,7 @@ public class Dashboard extends javax.swing.JFrame {
         jLabel7.setForeground(new java.awt.Color(0, 102, 153));
         jLabel7.setText("Health News");
 
-        jScrollPane1.setViewportView(jList1);
-
-        jScrollPane2.setViewportView(jList2);
+        jScrollPane2.setViewportView(listJadwal);
 
         jLabel8.setFont(new java.awt.Font("Arial", 1, 16)); // NOI18N
         jLabel8.setForeground(new java.awt.Color(0, 102, 153));
@@ -222,10 +228,8 @@ public class Dashboard extends javax.swing.JFrame {
                     .addComponent(jLabel7)
                     .addComponent(jLabel12)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(lihatSemua)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(184, 184, 184)
+                        .addComponent(lihatSemua)))
                 .addContainerGap(34, Short.MAX_VALUE))
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
@@ -242,21 +246,19 @@ public class Dashboard extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(clockPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(51, 51, 51)
+                .addGap(67, 67, 67)
                 .addComponent(lihatSemua)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 105, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 109, Short.MAX_VALUE)
                 .addComponent(jLabel7)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(jLabel12)
-                .addGap(53, 53, 53)
+                .addGap(111, 111, 111)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addGap(317, 317, 317)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(423, Short.MAX_VALUE)))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(443, Short.MAX_VALUE)))
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addGap(291, 291, 291)
@@ -292,19 +294,35 @@ public class Dashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_jPanel1PropertyChange
 
     private void pillMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pillMouseClicked
-        navigateToClass("MedicineUI");
+        MedicineUI medicine = new MedicineUI();
+        medicine.setLocationRelativeTo(null);
+        // Make the Medicine frame visible
+        medicine.setVisible(true);
+        // Close the current Login frame
+        this.dispose();
     }//GEN-LAST:event_pillMouseClicked
 
     private void addMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_addMouseClicked
-        navigateToClass("ScheduleUI");
+        ScheduleUI schedule = new ScheduleUI();
+        schedule.setLocationRelativeTo(null);
+        // Make the Medicine frame visible
+        schedule.setVisible(true);
+        // Close the current Login frame
+        this.dispose();
     }//GEN-LAST:event_addMouseClicked
 
     private void profileMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_profileMouseClicked
-        navigateToClass("HealthProfileUI");
+        HealthProfileUI profile = new HealthProfileUI();
+        profile.setLocationRelativeTo(null);
+        // Make the Medicine frame visible
+        profile.setVisible(true);
+        // Close the current Login frame
+        this.dispose();
     }//GEN-LAST:event_profileMouseClicked
 
     private void lihatSemuaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lihatSemuaMouseClicked
         ScheduleUI schedule = new ScheduleUI();
+        schedule.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         schedule.setVisible(true);
         // Close the current Login frame
@@ -312,7 +330,12 @@ public class Dashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_lihatSemuaMouseClicked
 
     private void alarmMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_alarmMouseClicked
-        navigateToClass("Alarm");
+        Alarm alarm = new Alarm();
+        alarm.setLocationRelativeTo(null);
+        // Make the Medicine frame visible
+        alarm.setVisible(true);
+        // Close the current Login frame
+        this.dispose();
     }//GEN-LAST:event_alarmMouseClicked
 
     private void logoutMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_logoutMouseClicked
@@ -322,6 +345,7 @@ public class Dashboard extends javax.swing.JFrame {
         if (option == JOptionPane.YES_OPTION) {
             // Jika iya, lakukan proses logout
             Login login = new Login();
+            login.setLocationRelativeTo(null);
             // Make the Login frame visible
             login.setVisible(true);
             // Close the current Dashboard frame
@@ -348,29 +372,162 @@ public class Dashboard extends javax.swing.JFrame {
         initClock();
         updateGreeting(); // Call the method to update the greeting message
     }
+
+    
+    public String getUserFullNameByUsername(String username) throws SQLException {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        String userFullName = "";
+
+        try {
+            // Establish database connection
+            connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+            // Prepare SQL query to fetch user's full name based on username
+            String query = "SELECT username FROM user WHERE username = ?";
+            statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+
+            // Execute query
+            resultSet = statement.executeQuery();
+
+            // Check if a result is obtained
+            if (resultSet.next()) {
+                userFullName = resultSet.getString("username");
+            }
+        } finally {
+            // Close resources in a finally block to ensure they are closed even if an exception occurs
+            if (resultSet != null) resultSet.close();
+            if (statement != null) statement.close();
+            if (connection != null) connection.close();
+        }
+
+        return userFullName;
+    }
     
     private void updateGreeting() {
-        jLabel4.setText("Halo " + username + ", ada yang bisa kami bantu ?");
+        try {
+            // Retrieve user's full name based on the logged-in username
+            String userFullName = getUserFullNameByUsername(username);
+
+            // Update the greeting label
+            if (!userFullName.isEmpty()) {
+                jLabel4.setText("Halo " + userFullName);
+            } else {
+                jLabel4.setText("Halo, semoga sehat selalu");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception (log it or show an error message)
+            jLabel4.setText("Halo, Semoga sehat selalu");
+        }
     }
+
+
+// Example method to retrieve the logged-in username from the database
+    private String getLoggedInUsernameFromDatabase() {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            // Establish database connection
+            connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+            // Execute a query to get the username for the logged-in user
+            String query = "SELECT username FROM user WHERE username = ?"; // Replace with the appropriate condition
+            preparedStatement = connection.prepareStatement(query);
+
+            // Assuming you have the logged-in user's ID, replace 1 with the actual ID
+            preparedStatement.setInt(1, 1); 
+
+            // Execute the query
+            resultSet = preparedStatement.executeQuery();
+
+            // Check if the result set has a value
+            if (resultSet.next()) {
+                return resultSet.getString("username");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception (log it or show an error message)
+        } finally {
+            // Close resources
+            try {
+                if (resultSet != null) resultSet.close();
+                if (preparedStatement != null) preparedStatement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Return null if username retrieval fails
+        return null;
+    }
+
+    private void populateScheduleList() {
+        try {
+            // Establish a connection to the database
+            Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+            // Prepare SQL query to fetch data from the "alarm" table
+            String query = "SELECT * from alarm where id_alarm = 5; "; // You might need to adjust this query based on your data structure
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+
+            // Execute query
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            // Create a DefaultListModel to hold the data for the JList
+            DefaultListModel<String> listModel = new DefaultListModel<>();
+
+            // Iterate through the result set and add data to the list model
+            while (resultSet.next()) {
+                // Assuming your data structure is similar to "nama_obat - waktu"
+                String namaObat = resultSet.getString("nama_obat");
+                String waktu = resultSet.getString("waktu");
+                String listItem = namaObat + " - " + waktu;
+                listModel.addElement(listItem);
+            }
+
+            // Set the list model to the listJadwal component
+            listJadwal.setModel(listModel);
+
+            // Close resources
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error fetching data from the database: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void navigateToClass(String className) {
     switch (className) {
-        case "MedicineUI":
+        case "obat":
             MedicineUI medicine = new MedicineUI();
+            medicine.setLocationRelativeTo(null);
             medicine.setVisible(true);
             this.dispose();
             break;
-        case "ScheduleUI":
+        case "jadwal":
             ScheduleUI schedule = new ScheduleUI();
+            schedule.setLocationRelativeTo(null);
             schedule.setVisible(true);
             this.dispose();
             break;
-        case "HealthProfileUI":
+        case "profil":
             HealthProfileUI healthProfile = new HealthProfileUI();
+            healthProfile.setLocationRelativeTo(null);
             healthProfile.setVisible(true);
             this.dispose();
             break;
-        case "Alarm":
+        case "alarm":
             Alarm alarm = new Alarm();
+            alarm.setLocationRelativeTo(null);
             alarm.setVisible(true);
             this.dispose();
             break;
@@ -409,7 +566,10 @@ public class Dashboard extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Dashboard().setVisible(true);
+                Dashboard dashboardFrame = new Dashboard();
+                dashboardFrame.pack();
+                dashboardFrame.setLocationRelativeTo(null);
+                dashboardFrame.setVisible(true);
             }
         });
     }
@@ -423,13 +583,11 @@ public class Dashboard extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
-    private javax.swing.JList<String> jList1;
-    private javax.swing.JList<String> jList2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lihatSemua;
+    private javax.swing.JList<String> listJadwal;
     private javax.swing.JLabel logout;
     private javax.swing.JLabel pill;
     private javax.swing.JLabel profile;

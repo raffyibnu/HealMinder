@@ -3,19 +3,22 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Controller;
+package controller;
 
 import javax.swing.JOptionPane;
-
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 /**
  *
  * @author Raffy
  */
 public class Daftar extends javax.swing.JFrame {
-
-    /**
-     * Creates new form Daftar
-     */
+    static final String DB_URL = "jdbc:mysql://localhost:3306/healminder";
+    static final String DB_USER = "healminder";
+    static final String DB_PASS = "pbo";
     public Daftar() {
         initComponents();
     }
@@ -139,6 +142,7 @@ public class Daftar extends javax.swing.JFrame {
 
     private void backMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_backMouseClicked
         Login login = new Login();
+        login.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         login.setVisible(true);
         // Close the current Login frame
@@ -148,7 +152,7 @@ public class Daftar extends javax.swing.JFrame {
     private void daftarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_daftarMouseClicked
         String enteredEmail = email.getText().trim();
         String enteredUsername = username.getText().trim();
-        String enteredPassword = password.getText().trim();
+        String enteredPassword = new String(password.getPassword());
 
         // Check if any of the fields is empty
         if (enteredEmail.isEmpty() || enteredUsername.isEmpty() || enteredPassword.isEmpty()) {
@@ -156,21 +160,21 @@ public class Daftar extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Email, username, dan password harus terisi", "Error", JOptionPane.ERROR_MESSAGE);
         } else {
             // Continue with the registration logic
-            // You can add your registration logic here
-            // For demonstration purposes, let's just print the values
-            System.out.println("Email: " + enteredEmail);
-            System.out.println("Username: " + enteredUsername);
-            System.out.println("Password: " + enteredPassword);
 
-            // You can add your actual registration logic here
+            // Register the user in the database
+            if (registerUser(enteredEmail, enteredUsername, enteredPassword)) {
+                // Registration successful
 
-            // After successful registration, you may want to navigate to another frame
-            // For example, you can open the Dashboard frame
-            Dashboard dashboard = new Dashboard(enteredUsername);
-            dashboard.setVisible(true);
+                // Get the user ID after registration
+                int userID = getUserID(enteredUsername);
 
-            // Close the current Daftar frame
-            this.dispose();
+
+                // Close the current Daftar frame
+                this.dispose();
+            } else {
+                // Registration failed
+                JOptionPane.showMessageDialog(this, "Registrasi gagal. Mohon coba lagi.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }//GEN-LAST:event_daftarMouseClicked
 
@@ -178,9 +182,100 @@ public class Daftar extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_passwordActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
+    private boolean registerUser(String email, String username, String password) {
+    // Perform the actual registration logic and insert data into the user table
+    Connection connection = null;
+    PreparedStatement preparedStatement = null;
+
+    try {
+        // Membuat koneksi ke database
+        connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+        // Menjalankan query untuk insert data ke dalam tabel user
+        String query = "INSERT INTO user (email, username, password) VALUES (?, ?, ?)";
+        preparedStatement = connection.prepareStatement(query);
+        preparedStatement.setString(1, email);
+        preparedStatement.setString(2, username);
+        preparedStatement.setString(3, password);
+
+        // Menjalankan pernyataan SQL
+        int rowsAffected = preparedStatement.executeUpdate();
+
+        // Jika data berhasil dimasukkan, mengembalikan true
+        if (rowsAffected > 0) {
+            // Open the Login page after successful registration
+            Login login = new Login();
+            login.setLocationRelativeTo(null);
+            login.setVisible(true);
+
+            // Close the current Daftar frame
+            this.dispose();
+
+            return true;
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        // Handle error
+        JOptionPane.showMessageDialog(this, "Error while registering user.", "Error", JOptionPane.ERROR_MESSAGE);
+    } finally {
+        // Menutup semua sumber daya yang digunakan
+        try {
+            if (preparedStatement != null) preparedStatement.close();
+            if (connection != null) connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Jika terjadi kesalahan, mengembalikan nilai false
+    return false;
+}
+
+    
+    private int getUserID(String username) {
+    // Get the user ID based on the username
+    Connection connection = null;
+    PreparedStatement preparedStatement = null;
+    ResultSet resultSet = null;
+
+    try {
+        // Membuat koneksi ke database
+        connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+        // Menjalankan query untuk mendapatkan ID user berdasarkan username
+        String query = "SELECT id_user FROM user WHERE username = ?";
+        preparedStatement = connection.prepareStatement(query);
+        preparedStatement.setString(1, username);
+
+        // Menjalankan pernyataan SQL
+        resultSet = preparedStatement.executeQuery();
+
+        // Jika ada hasil dari query, mengembalikan ID user
+        if (resultSet.next()) {
+            return resultSet.getInt("id_user");
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        // Handle error
+        JOptionPane.showMessageDialog(this, "Error while getting user ID.", "Error", JOptionPane.ERROR_MESSAGE);
+    } finally {
+        // Menutup semua sumber daya yang digunakan
+        try {
+            if (resultSet != null) resultSet.close();
+            if (preparedStatement != null) preparedStatement.close();
+            if (connection != null) connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Jika terjadi kesalahan, mengembalikan nilai -1
+    return -1;
+}
+
+    
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -208,7 +303,10 @@ public class Daftar extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Daftar().setVisible(true);
+                Daftar daftarFrame = new Daftar();
+                daftarFrame.pack();
+                daftarFrame.setLocationRelativeTo(null);
+                daftarFrame.setVisible(true);
             }
         });
     }

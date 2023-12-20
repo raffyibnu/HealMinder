@@ -3,21 +3,21 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Controller;
+package controller;
 
-import java.util.Arrays;
-import java.util.List;
 import javax.swing.JOptionPane;
-
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 /**
  *
  * @author Raffy
  */
 public class EditHP extends javax.swing.JFrame {
-
-    /**
-     * Creates new form EditHP
-     */
+    static final String URL = "jdbc:mysql://localhost:3306/healminder";
+    static final String USER = "healminder";
+    static final String PASS = "pbo";
     public EditHP() {
         initComponents();
     }
@@ -227,6 +227,7 @@ public class EditHP extends javax.swing.JFrame {
 
     private void addMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_addMouseClicked
         ScheduleUI schedule = new ScheduleUI();
+        schedule.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         schedule.setVisible(true);
         // Close the current Login frame
@@ -235,6 +236,7 @@ public class EditHP extends javax.swing.JFrame {
 
     private void pillMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pillMouseClicked
         MedicineUI medicine = new MedicineUI();
+        medicine.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         medicine.setVisible(true);
         // Close the current Login frame
@@ -243,6 +245,7 @@ public class EditHP extends javax.swing.JFrame {
 
     private void profileMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_profileMouseClicked
         HealthProfileUI healthProfile = new HealthProfileUI();
+        healthProfile.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         healthProfile.setVisible(true);
         // Close the current Login frame
@@ -251,6 +254,7 @@ public class EditHP extends javax.swing.JFrame {
 
     private void backMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_backMouseClicked
         Dashboard dashboard = new Dashboard();
+        dashboard.setLocationRelativeTo(null);
         // Make the Medicine frame visible
         dashboard.setVisible(true);
         // Close the current Login frame
@@ -260,30 +264,56 @@ public class EditHP extends javax.swing.JFrame {
     private void submitMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_submitMouseClicked
         if (alergi.getText().isEmpty() || penyakit.getText().isEmpty() || 
             goldar.getText().isEmpty() || kontak.getText().isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Harap lengkapi semua informasi terlebih dahulu.", "Error", JOptionPane.ERROR_MESSAGE);
-        return; // Hentikan proses submit jika ada field yang kosong
-    }
+            JOptionPane.showMessageDialog(this, "Harap lengkapi semua informasi terlebih dahulu.", "Error", JOptionPane.ERROR_MESSAGE);
+            return; // Hentikan proses submit jika ada field yang kosong
+        }
 
-    // Simpan informasi yang diinput ke dalam list HealthProfileUI
-    List<String> alergiList = Arrays.asList(alergi.getText().split(","));
-    List<String> penyakitList = Arrays.asList(penyakit.getText().split(","));
-    List<String> kontakList = Arrays.asList(kontak.getText().split(","));
-    List<String> goldarList = Arrays.asList(goldar.getText().split(","));
+        try {
+            // 1. Establish a database connection
+            Connection connection = DriverManager.getConnection(URL, USER, PASS);
 
-    // Panggil method setter di HealthProfileUI
-    HealthProfileUI healthProfileUI = new HealthProfileUI();
-    healthProfileUI.setHealthProfile(alergiList, penyakitList, kontakList, goldarList);
+            // 2. Retrieve the user ID of the currently logged-in user
+            // Assuming you have a method to get the user ID from your authentication system
+            int userId = getCurrentUserId(); // Replace with the actual method
 
-    // TODO: Tambahkan logika untuk menyimpan informasi ke database atau tempat penyimpanan lainnya
-    JOptionPane.showMessageDialog(this, "Informasi berhasil disimpan.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            // 3. Execute an SQL INSERT statement
+            String insertQuery = "INSERT INTO riwayat_kesehatan (alergi, penyakit, kontak_darurat, golongan_darah) VALUES (?, ?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+                // Set the parameters in the PreparedStatement
+                preparedStatement.setString(1, alergi.getText());
+                preparedStatement.setString(2, penyakit.getText());
+                preparedStatement.setString(3, kontak.getText());
+                preparedStatement.setString(4, goldar.getText());
 
-    // Pindah ke HealthProfileUI setelah OK diklik
-    healthProfileUI.setVisible(true);
+                // Execute the INSERT statement
+                preparedStatement.executeUpdate();
 
-    // Tutup frame EditHP
-    this.dispose();
+                // Inform the user that the information has been successfully saved
+                JOptionPane.showMessageDialog(this, "Informasi berhasil disimpan.", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+                // Close the database connection
+                connection.close();
+
+                // TODO: Add logic to update the HealthProfileUI with the new information if needed
+
+                // Pindah ke HealthProfileUI setelah OK diklik
+                HealthProfileUI healthProfileUI = new HealthProfileUI();
+                healthProfileUI.setLocationRelativeTo(null);
+                healthProfileUI.setVisible(true);
+
+                // Tutup frame EditHP
+                this.dispose();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Gagal menyimpan informasi.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_submitMouseClicked
-
+    private int getCurrentUserId() {
+        // Implement the logic to retrieve the user ID based on your authentication system
+        // Return a placeholder value for demonstration purposes
+        return 1;
+    }
     /**
      * @param args the command line arguments
      */
@@ -314,7 +344,11 @@ public class EditHP extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new EditHP().setVisible(true);
+                EditHP editHPFrame = new EditHP();
+                editHPFrame.pack();
+                editHPFrame.setLocationRelativeTo(null);
+                editHPFrame.setVisible(true);
+
             }
         });
     }
